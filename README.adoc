@@ -1,4 +1,4 @@
-= Regex Threat Protection Policy
+= Regex threat protection policy
 
 ifdef::env-github[]
 image:https://ci.gravitee.io/buildStatus/icon?job=gravitee-io/gravitee-policy-regex-threat-protection/master["Build status", link="https://ci.gravitee.io/job/gravitee-io/job/gravitee-policy-regex-threat-protection/"]
@@ -18,9 +18,9 @@ endif::[]
 
 == Description
 
-The Regex Threat Protection Policy allows extracting information from a request (headers, path, query parameters, body payload) and evaluates that content against defined regular expressions.
-If any content matches the specified regular expression, the request will be considered a threat and rejected with a 400 BAD REQUEST.
-Inject processing report messages into request metrics for analytics.
+You can use the `regex-threat-protection` to extract information from a request (headers, path, query parameters, body payload) and evaluate that content against pre-defined regular expressions.
+If any content matches the specified regular expression, the request is considered a threat and rejected with a 400 BAD REQUEST.
+The policy injects processing report messages into request metrics for analytics.
 
 == Configuration
 
@@ -29,45 +29,46 @@ Inject processing report messages into request metrics for analytics.
 
 .^|regex
 ^.^|X
-|Regex used to detect malicious injections. You can enable this regular expression on headers, path and body or add multiple Regex Threat Protection Policies with different regex depending on your needs.
+|Regex used to detect malicious injections. You can enable this regular expression on headers, path and body or add multiple Regex threat protection policies with different regex, depending on your needs.
 ^.^|string
 |
 
 .^|caseSensitive
 ^.^|
-|Perform case sensitive matching. *WARNING*: Please beware that enabling case sensitive matching may let pass some risky patterns such as ```DrOp TaBlE```.
+|Perform case-sensitive matching. *WARNING*: Use with caution. Enabling case sensitive matching may miss some risky patterns such as ```DrOp TaBlE```.
 ^.^|boolean
 ^.^|false
 
 .^|checkHeaders
 ^.^|
-|Evaluate regex on request headers.
+|Evaluate regex on request headers
 ^.^|boolean
 ^.^|true
 
 .^|checkPath
 ^.^|
-|Evaluate regex on request path and query parameters.
+|Evaluate regex on request path and query parameters
 ^.^|boolean
 ^.^|true
 
 .^|checkBody
 ^.^|
-|Evaluate regex on request body content.
+|Evaluate regex on request body content
 ^.^|boolean
 ^.^|true
 
 |===
 
+== Errors
 
-== Http Status Code
+=== HTTP status code
 
 |===
 |Code |Message
 
 .^| ```400```
 
-a| In case of:
+a| Applies to:
 
 * Matching request headers
 * Matching request path or query parameters
@@ -75,13 +76,14 @@ a| In case of:
 
 |===
 
-== Errors
+=== Default response override
 
-If you're looking to override the default response provided by the policy, you can do it
-thanks to the response templates feature. These templates must be define at the API level (see `Response Templates`
-from the `Proxy` menu).
+You can use the response template feature to override the default response provided by the policy. These templates must be defined at the API level (see the API Console *Response Templates*
+option in the API *Proxy* menu).
 
-Here are the error keys send by this policy:
+=== Error keys
+
+The error keys sent by this policy are as follows:
 
 [cols="2*", options="header"]
 |===
