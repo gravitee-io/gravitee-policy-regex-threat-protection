@@ -22,6 +22,10 @@ You can use the `regex-threat-protection` to extract information from a request 
 If any content matches the specified regular expression, the request is considered a threat and rejected with a 400 BAD REQUEST.
 The policy injects processing report messages into request metrics for analytics.
 
+=== Policy identifier
+
+You can enable or disable the policy with policy identifier `regex-threat-protection`.
+
 == Configuration
 
 |===
