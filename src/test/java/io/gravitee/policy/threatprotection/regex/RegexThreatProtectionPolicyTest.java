@@ -15,23 +15,23 @@
  */
 package io.gravitee.policy.threatprotection.regex;
 
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.stream.ReadWriteStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
-import io.gravitee.policy.threatprotection.regex.RegexThreatProtectionPolicy;
-import io.gravitee.policy.threatprotection.regex.RegexThreatProtectionPolicyConfiguration;
-import io.gravitee.reporter.api.http.Metrics;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Map;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -117,7 +117,6 @@ public class RegexThreatProtectionPolicyTest {
 
     @Test
     public void shouldRejectEvilHeaderValue() {
-
         HttpHeaders headers = createHttpHeaders();
         headers.add("header2", "jkl-evil");
 
@@ -265,7 +264,7 @@ public class RegexThreatProtectionPolicyTest {
 
     private HttpHeaders createHttpHeaders() {
 
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = HttpHeaders.create();
         headers.add("header1", "abc");
         headers.add("header1", "def");
         headers.add("header2", "ghi");

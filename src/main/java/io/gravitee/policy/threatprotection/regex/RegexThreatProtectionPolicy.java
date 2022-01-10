@@ -21,6 +21,7 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.http.stream.TransformableRequestStreamBuilder;
 import io.gravitee.gateway.api.stream.ReadWriteStream;
 import io.gravitee.policy.api.PolicyChain;
@@ -31,6 +32,8 @@ import io.gravitee.policy.api.annotations.OnRequestContent;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
@@ -87,6 +90,30 @@ public class RegexThreatProtectionPolicy {
         }
 
         return null;
+    }
+
+    private boolean matches(HttpHeaders headers) {
+
+        return matches(headers, false);
+    }
+
+    private boolean matches(HttpHeaders headers, boolean decodeValues) {
+
+        Pattern pattern = configuration.getPattern();
+
+        boolean match = false;
+
+        Iterator<String> names = headers.names().iterator();
+        while(names.hasNext()) {
+            String header = names.next();
+
+            match = pattern.matcher(header).matches() || headers.getAll(header).stream().anyMatch(e -> pattern.matcher(decodeValues ? decode(e) : e).matches());
+            if (match) {
+                break;
+            }
+        }
+
+        return match;
     }
 
     private boolean matches(MultiValueMap<String, String> map) {
