@@ -18,9 +18,8 @@ package io.gravitee.policy.threatprotection.regex;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import io.gravitee.policy.api.PolicyConfiguration;
 import io.gravitee.common.http.HttpMethod;
-
+import io.gravitee.policy.api.PolicyConfiguration;
 import java.util.regex.Pattern;
 
 /**
@@ -70,9 +69,7 @@ public class RegexThreatProtectionPolicyConfiguration implements PolicyConfigura
      * @return the compiled regex.
      */
     public Pattern getPattern() {
-
         if (pattern == null) {
-
             int flags = 0;
 
             if (!caseSensitive) {
