@@ -15,8 +15,7 @@
  */
 package io.gravitee.policy.threatprotection.regex;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.gravitee.common.http.HttpHeaders;
@@ -25,12 +24,12 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.api.stream.BufferedReadWriteStream;
 import io.gravitee.gateway.api.stream.ReadWriteStream;
+import io.gravitee.gateway.api.stream.SimpleReadWriteStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
-import io.gravitee.policy.threatprotection.regex.RegexThreatProtectionPolicy;
-import io.gravitee.policy.threatprotection.regex.RegexThreatProtectionPolicyConfiguration;
-import io.gravitee.reporter.api.http.Metrics;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,7 +70,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(0)).headers();
         verify(request, times(0)).pathInfo();
         verify(request, times(0)).parameters();
@@ -86,7 +85,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(1)).headers();
         verify(request, times(0)).pathInfo();
         verify(request, times(0)).parameters();
@@ -104,7 +103,8 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
+
         verify(request, times(1)).headers();
         verify(request, times(0)).pathInfo();
         verify(request, times(0)).parameters();
@@ -122,7 +122,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(1)).headers();
         verify(request, times(0)).pathInfo();
         verify(request, times(0)).parameters();
@@ -138,7 +138,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(0)).headers();
         verify(request, times(1)).pathInfo();
         verify(request, times(1)).parameters();
@@ -153,7 +153,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(0)).headers();
         verify(request, times(1)).pathInfo();
         verify(request, times(0)).parameters();
@@ -172,7 +172,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(0)).headers();
         verify(request, times(1)).pathInfo();
         verify(request, times(1)).parameters();
@@ -191,7 +191,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
         cut.onRequest(request, response, policyChain);
 
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
         verify(request, times(0)).headers();
         verify(request, times(1)).pathInfo();
         verify(request, times(1)).parameters();
@@ -203,49 +203,58 @@ public class RegexThreatProtectionPolicyTest {
         configuration.setCheckBody(false);
 
         ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertNull(readWriteStream);
+        assertThat(readWriteStream).isNull();
 
         verifyZeroInteractions(policyChain);
     }
 
     @Test
     public void shouldCheckAndAcceptBody() {
-        when(request.headers()).thenReturn(createHttpHeaders());
         configuration.setCheckBody(true);
 
         ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertNotNull(readWriteStream);
+        assertThat(readWriteStream).isNotNull();
+
+        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = spyEndHandler(readWriteStream);
 
         readWriteStream.write(Buffer.buffer("body content"));
         readWriteStream.end();
+
+        assertThat(hasCalledEndOnReadWriteStreamParentClass).isTrue();
 
         verifyZeroInteractions(policyChain);
     }
 
     @Test
     public void shouldRejectEvilBody() {
-        when(request.headers()).thenReturn(createHttpHeaders());
         configuration.setCheckBody(true);
 
         ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertNotNull(readWriteStream);
+        assertThat(readWriteStream).isNotNull();
+
+        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = spyEndHandler(readWriteStream);
 
         readWriteStream.write(Buffer.buffer("evil body content"));
         readWriteStream.end();
+
+        assertThat(hasCalledEndOnReadWriteStreamParentClass).isFalse();
 
         verify(policyChain, times(1)).streamFailWith(any(PolicyResult.class));
     }
 
     @Test
     public void shouldRejectEvilBodyCaseInsensitive() {
-        when(request.headers()).thenReturn(createHttpHeaders());
         configuration.setCheckBody(true);
 
         ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertNotNull(readWriteStream);
+        assertThat(readWriteStream).isNotNull();
+
+        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = spyEndHandler(readWriteStream);
 
         readWriteStream.write(Buffer.buffer("EvIL body content"));
         readWriteStream.end();
+
+        assertThat(hasCalledEndOnReadWriteStreamParentClass).isFalse();
 
         verify(policyChain, times(1)).streamFailWith(any(PolicyResult.class));
     }
@@ -266,5 +275,20 @@ public class RegexThreatProtectionPolicyTest {
         params.add("param2", "ghi");
         params.add("param2", "jkl");
         return params;
+    }
+
+    /**
+     * Replace the endHandler of the resulting ReadWriteStream of the policy execution.
+     * This endHandler will set an {@link AtomicBoolean} to {@code true} if its called.
+     * It will allow us to verify if super.end() has been called on {@link BufferedReadWriteStream#end()}
+     * @param readWriteStream: the {@link ReadWriteStream} to modify
+     * @return an AtomicBoolean set to {@code true} if {@link SimpleReadWriteStream#end()}, else {@code false}
+     */
+    private AtomicBoolean spyEndHandler(ReadWriteStream readWriteStream) {
+        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = new AtomicBoolean(false);
+        readWriteStream.endHandler(__ -> {
+            hasCalledEndOnReadWriteStreamParentClass.set(true);
+        });
+        return hasCalledEndOnReadWriteStreamParentClass;
     }
 }
