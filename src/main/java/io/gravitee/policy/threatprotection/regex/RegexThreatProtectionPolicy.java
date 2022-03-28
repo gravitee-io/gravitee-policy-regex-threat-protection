@@ -21,8 +21,9 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
-import io.gravitee.gateway.api.http.stream.TransformableRequestStreamBuilder;
+import io.gravitee.gateway.api.stream.BufferedReadWriteStream;
 import io.gravitee.gateway.api.stream.ReadWriteStream;
+import io.gravitee.gateway.api.stream.SimpleReadWriteStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
@@ -76,10 +77,17 @@ public class RegexThreatProtectionPolicy {
     @OnRequestContent
     public ReadWriteStream<Buffer> onRequestContent(Request request, PolicyChain policyChain) {
         if (configuration.isCheckBody()) {
-            return TransformableRequestStreamBuilder
-                .on(request)
-                .chain(policyChain)
-                .transform(buffer -> {
+            return new BufferedReadWriteStream() {
+                final Buffer buffer = Buffer.buffer();
+
+                @Override
+                public SimpleReadWriteStream<Buffer> write(Buffer content) {
+                    buffer.appendBuffer(content);
+                    return this;
+                }
+
+                @Override
+                public void end() {
                     // Load the body in memory and execute the regex on it.
                     if (configuration.getPattern().matcher(buffer.toString()).matches()) {
                         policyChain.streamFailWith(
@@ -90,11 +98,14 @@ public class RegexThreatProtectionPolicy {
                                 MediaType.TEXT_PLAIN
                             )
                         );
+                    } else {
+                        if (buffer.length() > 0) {
+                            super.write(buffer);
+                        }
+                        super.end();
                     }
-
-                    return buffer;
-                })
-                .build();
+                }
+            };
         }
 
         return null;
