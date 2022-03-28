@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.3.0...1.3.1) (2022-03-28)
+
+
+### Bug Fixes
+
+* stop propagating request to backend if not valid ([2cfb410](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/commit/2cfb41020cdc0ef84af0a09ee6a2e03b3f3dd67f))
+
 # [1.3.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.2.0...1.3.0) (2022-01-21)
 
 
