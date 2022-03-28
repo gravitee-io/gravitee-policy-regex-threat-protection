@@ -27,7 +27,6 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnRequestContent;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -39,7 +38,7 @@ import java.util.regex.Pattern;
  */
 public class RegexThreatProtectionPolicy {
 
-    private final static String BAD_REQUEST = "Bad Request";
+    private static final String BAD_REQUEST = "Bad Request";
     private static final String REGEX_THREAT_HEADER_DETECTED_KEY = "REGEX_THREAT_HEADER_DETECTED";
     private static final String REGEX_THREAT_PATH_DETECTED_KEY = "REGEX_THREAT_PATH_DETECTED";
     private static final String REGEX_THREAT_BODY_DETECTED_KEY = "REGEX_THREAT_BODY_DETECTED";
@@ -52,17 +51,22 @@ public class RegexThreatProtectionPolicy {
 
     @OnRequest
     public void onRequest(Request request, Response response, PolicyChain policyChain) {
-
         // Execute regex on request header.
         if (configuration.isCheckHeaders() && matches(request.headers())) {
-            policyChain.failWith(PolicyResult.failure(REGEX_THREAT_HEADER_DETECTED_KEY, HttpStatusCode.BAD_REQUEST_400, BAD_REQUEST, MediaType.TEXT_PLAIN));
+            policyChain.failWith(
+                PolicyResult.failure(REGEX_THREAT_HEADER_DETECTED_KEY, HttpStatusCode.BAD_REQUEST_400, BAD_REQUEST, MediaType.TEXT_PLAIN)
+            );
             return;
         }
 
         // Execute regex on pathInfo and each query parameter.
-        if (configuration.isCheckPath() &&
-                (configuration.getPattern().matcher(decode(request.pathInfo())).matches() || matches(request.parameters(), true))) {
-            policyChain.failWith(PolicyResult.failure(REGEX_THREAT_PATH_DETECTED_KEY, HttpStatusCode.BAD_REQUEST_400, BAD_REQUEST, MediaType.TEXT_PLAIN));
+        if (
+            configuration.isCheckPath() &&
+            (configuration.getPattern().matcher(decode(request.pathInfo())).matches() || matches(request.parameters(), true))
+        ) {
+            policyChain.failWith(
+                PolicyResult.failure(REGEX_THREAT_PATH_DETECTED_KEY, HttpStatusCode.BAD_REQUEST_400, BAD_REQUEST, MediaType.TEXT_PLAIN)
+            );
             return;
         }
 
@@ -71,39 +75,48 @@ public class RegexThreatProtectionPolicy {
 
     @OnRequestContent
     public ReadWriteStream<Buffer> onRequestContent(Request request, PolicyChain policyChain) {
-
         if (configuration.isCheckBody()) {
             return TransformableRequestStreamBuilder
-                    .on(request)
-                    .chain(policyChain)
-                    .transform(buffer -> {
-                        // Load the body in memory and execute the regex on it.
-                        if (configuration.getPattern().matcher(buffer.toString()).matches()) {
-                            policyChain.streamFailWith(PolicyResult.failure(REGEX_THREAT_BODY_DETECTED_KEY, HttpStatusCode.BAD_REQUEST_400, BAD_REQUEST, MediaType.TEXT_PLAIN));
-                        }
+                .on(request)
+                .chain(policyChain)
+                .transform(buffer -> {
+                    // Load the body in memory and execute the regex on it.
+                    if (configuration.getPattern().matcher(buffer.toString()).matches()) {
+                        policyChain.streamFailWith(
+                            PolicyResult.failure(
+                                REGEX_THREAT_BODY_DETECTED_KEY,
+                                HttpStatusCode.BAD_REQUEST_400,
+                                BAD_REQUEST,
+                                MediaType.TEXT_PLAIN
+                            )
+                        );
+                    }
 
-                        return buffer;
-                    }).build();
+                    return buffer;
+                })
+                .build();
         }
 
         return null;
     }
 
     private boolean matches(MultiValueMap<String, String> map) {
-
         return matches(map, false);
     }
 
     private boolean matches(MultiValueMap<String, String> map, boolean decodeValues) {
-
         Pattern pattern = configuration.getPattern();
 
-        return map.entrySet().stream().anyMatch(e -> pattern.matcher(e.getKey()).matches()
-                || e.getValue().stream().anyMatch(v -> pattern.matcher(decodeValues ? decode(v) : v).matches()));
+        return map
+            .entrySet()
+            .stream()
+            .anyMatch(e ->
+                pattern.matcher(e.getKey()).matches() ||
+                e.getValue().stream().anyMatch(v -> pattern.matcher(decodeValues ? decode(v) : v).matches())
+            );
     }
 
     private String decode(String value) {
-
         try {
             return URLDecoder.decode(value, Charset.defaultCharset().name());
         } catch (UnsupportedEncodingException e) {
