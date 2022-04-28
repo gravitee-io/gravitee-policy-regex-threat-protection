@@ -15,7 +15,7 @@
  */
 package io.gravitee.policy.threatprotection.regex;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -30,7 +30,6 @@ import io.gravitee.gateway.api.stream.SimpleReadWriteStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
