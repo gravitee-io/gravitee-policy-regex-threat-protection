@@ -290,6 +290,7 @@ public class RegexThreatProtectionPolicyTest {
         params.add("param1", "def");
         params.add("param2", "ghi");
         params.add("param2", "jkl");
+        params.add("boolean", null);
         return params;
     }
 
