@@ -259,6 +259,22 @@ public class RegexThreatProtectionPolicyTest {
         verify(policyChain, times(1)).streamFailWith(any(PolicyResult.class));
     }
 
+    @Test
+    public void shouldRejectPathTransversal() {
+        when(request.pathInfo()).thenReturn("/path/transversal/../path");
+        configuration.setCheckPath(true);
+        configuration.setRegex("^\\/?(.*\\.\\.).*$");
+
+        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
+        cut.onRequest(request, response, policyChain);
+
+        assertThat(readWriteStream).isNull();
+        verify(request, times(0)).headers();
+        verify(request, times(1)).pathInfo();
+        verify(request, times(0)).parameters();
+        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
+    }
+
     private HttpHeaders createHttpHeaders() {
         HttpHeaders headers = HttpHeaders.create();
         headers.add("header1", "abc");
@@ -274,6 +290,7 @@ public class RegexThreatProtectionPolicyTest {
         params.add("param1", "def");
         params.add("param2", "ghi");
         params.add("param2", "jkl");
+        params.add("boolean", null);
         return params;
     }
 

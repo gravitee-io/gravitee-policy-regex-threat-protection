@@ -33,6 +33,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -149,7 +153,7 @@ public class RegexThreatProtectionPolicy {
             .stream()
             .anyMatch(e ->
                 pattern.matcher(e.getKey()).matches() ||
-                e.getValue().stream().anyMatch(v -> pattern.matcher(decodeValues ? decode(v) : v).matches())
+                e.getValue().stream().filter(Objects::nonNull).anyMatch(v -> pattern.matcher(decodeValues ? decode(v) : v).matches())
             );
     }
 
