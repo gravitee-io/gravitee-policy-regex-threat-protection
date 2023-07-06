@@ -205,7 +205,7 @@ public class RegexThreatProtectionPolicyTest {
         ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
         assertThat(readWriteStream).isNull();
 
-        verifyZeroInteractions(policyChain);
+        verifyNoInteractions(policyChain);
     }
 
     @Test
@@ -222,7 +222,7 @@ public class RegexThreatProtectionPolicyTest {
 
         assertThat(hasCalledEndOnReadWriteStreamParentClass).isTrue();
 
-        verifyZeroInteractions(policyChain);
+        verifyNoInteractions(policyChain);
     }
 
     @Test
