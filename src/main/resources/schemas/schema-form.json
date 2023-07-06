@@ -1,18 +1,31 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "id": "urn:jsonschema:io:gravitee:policy:threatprotection:regex:RegexThreatProtectionPolicyConfiguration",
+  "additionalProperties": false,
   "properties": {
     "regex": {
       "title": "Regex",
-      "description": "Regex used to detect malicious injections. You can enable this regular expression on headers, path and body or add multiple Regex Threat Protection Policies with different regex depending on your needs.<br><br>Some regex detection examples:<ul><li>SQL Injection: <code>.*[\\s]*((delete)|(exec)|(drop\\s*table)|(insert)|(shutdown)|(update)|(\\bor\\b)).*</code></li><li>Server-Side Include Injection: <code>.*&lt;!--#(include|exec|echo|config|printenv)\\s+.*</code></li><li>Java Exception Injection: <code>.*Exception in thread.*</code></li><li>Javascript Injection: <code>.*<\\s*script\\b[^>]*>[^<]+<\\s*/\\s*script\\s*>.*</code></li><li>XPath Injection: <code>.*(/(@?[\\w_?\\w:\\*]+(\\[[^]]+\\])*)?)+.*</code></li></ul>",
+      "description": "Regex used to detect malicious injections.",
       "type": "string",
-      "format": "java-regex"
+      "format": "java-regex",
+      "gioConfig": {
+        "banner": {
+          "title": "Regex",
+          "text": "Regex used to detect malicious injections. You can enable this regular expression on headers, path and body or add multiple Regex Threat Protection Policies with different regex depending on your needs.<br><br>Some regex detection examples:<ul><li>SQL Injection: <code>.*[\\s]*((delete)|(exec)|(drop\\s*table)|(insert)|(shutdown)|(update)|(\\bor\\b)).*</code></li><li>Server-Side Include Injection: <code>.*&lt;!--#(include|exec|echo|config|printenv)\\s+.*</code></li><li>Java Exception Injection: <code>.*Exception in thread.*</code></li><li>Javascript Injection: <code>.*<\\s*script\\b[^>]*>[^<]+<\\s*/\\s*script\\s*>.*</code></li><li>XPath Injection: <code>.*(/(@?[\\w_?\\w:\\*]+(\\[[^]]+\\])*)?)+.*</code></li></ul>"
+        }
+      }
     },
     "caseSensitive": {
       "title": "Case sensitive",
-      "description": "Perform case sensitive matching.<br><strong>WARNING</strong>: Please beware that enabling case sensitive matching may let pass some risky patterns such as <code>DrOp TaBlE</code>.",
+      "description": "Perform case sensitive matching.",
       "type": "boolean",
-      "default": false
+      "default": false,
+      "gioConfig": {
+        "banner": {
+          "title": "Case sensitive",
+          "text": "Perform case sensitive matching.<br><strong>WARNING</strong>: Please beware that enabling case sensitive matching may let pass some risky patterns such as <code>DrOp TaBlE</code>."
+        }
+      }
     },
     "checkHeaders": {
       "title": "Check headers",
