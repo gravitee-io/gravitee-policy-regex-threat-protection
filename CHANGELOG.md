@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.3.3...1.4.0) (2023-07-07)
+
+
+### Features
+
+* add execution phase for proxy api ([7c64cf8](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/commit/7c64cf8e0a8b3a42511c27e295772beffaa9f90d))
+
 ## [1.3.3](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.3.2...1.3.3) (2022-08-02)
 
 

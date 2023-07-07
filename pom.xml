@@ -22,7 +22,7 @@
 
     <groupId>io.gravitee.policy</groupId>
     <artifactId>gravitee-policy-regex-threat-protection</artifactId>
-    <version>1.3.3</version>
+    <version>1.4.0</version>
 
     <name>Gravitee.io APIM - Policy - RegexThreatProtection</name>
     <description>Regex threat protection policy</description>
