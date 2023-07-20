@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.4.0...1.4.1) (2023-07-20)
+
+
+### Bug Fixes
+
+* update policy description ([2d7eb74](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/commit/2d7eb749dfcaec303c5e6f7486c3331c8c581daa))
+
 # [1.4.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.3.3...1.4.0) (2023-07-07)
 
 
