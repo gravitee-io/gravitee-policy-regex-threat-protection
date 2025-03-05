@@ -64,6 +64,12 @@ public class RegexThreatProtectionPolicyConfiguration implements PolicyConfigura
     private boolean caseSensitive = false;
 
     /**
+     * Flag indicating if matching is full or not.
+     * Default is true (fullMatching).
+     */
+    private boolean fullMatching = true;
+
+    /**
      * Returns the compiled version of the regex.
      *
      * @return the compiled regex.
@@ -120,5 +126,13 @@ public class RegexThreatProtectionPolicyConfiguration implements PolicyConfigura
 
     public void setCaseSensitive(boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
+    }
+
+    public boolean isFullMatching() {
+        return fullMatching;
+    }
+
+    public void setFullMatching(boolean fullMatching) {
+        this.fullMatching = fullMatching;
     }
 }

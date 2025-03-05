@@ -18,28 +18,27 @@ package io.gravitee.policy.threatprotection.regex;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.http.HttpHeaders;
-import io.gravitee.gateway.api.stream.BufferedReadWriteStream;
 import io.gravitee.gateway.api.stream.ReadWriteStream;
-import io.gravitee.gateway.api.stream.SimpleReadWriteStream;
 import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class RegexThreatProtectionPolicyTest {
 
     private static final String EVIL_REGEX = ".*evil.*";
+    private static final String SQL_INJECTION_REGEX = ".*[\\s]*((delete)|(exec)|(drop\\s*table)|(insert)|(shutdown)|(update)|(\\bor\\b)).*";
+    private static final String XSS_REGEX = ".*<\\s*script\\b[^>]*>[^<]+<\\s*/\\s*script\\s*>.*";
+    private static final String PATH_TRAVERSAL_REGEX = "^\\/?(.*\\.\\.).*$";
 
     @Mock
     private Request request;
@@ -50,262 +49,127 @@ public class RegexThreatProtectionPolicyTest {
     @Mock
     private PolicyChain policyChain;
 
-    RegexThreatProtectionPolicyConfiguration configuration;
-
+    private RegexThreatProtectionPolicyConfiguration configuration;
     private RegexThreatProtectionPolicy cut;
 
-    @Before
-    public void before() {
+    @BeforeEach
+    public void setUp() {
         configuration = new RegexThreatProtectionPolicyConfiguration();
-        configuration.setRegex(EVIL_REGEX);
         configuration.setCheckHeaders(false);
         configuration.setCheckPath(false);
         configuration.setCheckBody(false);
 
+        policyChain = mock(PolicyChain.class);
+        request = mock(Request.class);
+        response = mock(Response.class);
+
         cut = new RegexThreatProtectionPolicy(configuration);
     }
 
-    @Test
-    public void shouldAcceptAllWhenNoCheck() {
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(0)).headers();
-        verify(request, times(0)).pathInfo();
-        verify(request, times(0)).parameters();
-        verify(policyChain, times(1)).doNext(request, response);
+    static Stream<Arguments> provideTestCases() {
+        return Stream.of(
+            Arguments.of("shouldNotRejectWhenNoCheck", false, false, false, true, null, EVIL_REGEX, true),
+            Arguments.of("shouldRejectEvilHeaderName", true, false, false, true, "header-evil:jkl", EVIL_REGEX, false),
+            Arguments.of("shouldRejectEvilHeaderValue", true, false, false, true, "header2:jkl-evil", EVIL_REGEX, false),
+            Arguments.of("shouldRejectEvilPath", false, true, false, true, "/path-evil", EVIL_REGEX, false),
+            Arguments.of("shouldRejectEvilParamName", false, true, false, true, "param-evil:jkl", EVIL_REGEX, false),
+            Arguments.of("shouldRejectEvilParamValue", false, true, false, true, "param2:jkl-evil", EVIL_REGEX, false),
+            Arguments.of("shouldRejectEvilBody", false, false, true, true, "evil body content", EVIL_REGEX, false),
+            Arguments.of(
+                "shouldRejectEvilMultiLineSQLInjection",
+                false,
+                false,
+                true,
+                false,
+                "Hello,\nDROP\nTABLE users; Goodbye!",
+                SQL_INJECTION_REGEX,
+                false
+            ),
+            Arguments.of(
+                "shouldAcceptEvilMultiLineSQLInjectionWhenFullMatchingIsEnabled",
+                false,
+                false,
+                true,
+                true,
+                "Hello,\nDROP\nTABLE users; \nGoodbye!",
+                SQL_INJECTION_REGEX,
+                true
+            ),
+            Arguments.of(
+                "shouldRejectEvilMultiLineXSS",
+                false,
+                false,
+                true,
+                false,
+                "<html>\n<script>\nalert('XSS');\n</script>\n</html>",
+                XSS_REGEX,
+                false
+            ),
+            Arguments.of("shouldNotRejectMultiLineSafeInput", false, false, true, false, "Hello,\nThis is safe content.", XSS_REGEX, true),
+            Arguments.of("shouldRejectPathTraversal", false, true, false, true, "/path/../secret", PATH_TRAVERSAL_REGEX, false)
+        );
     }
 
-    @Test
-    public void shouldCheckAndAcceptHeaders() {
-        when(request.headers()).thenReturn(createHttpHeaders());
-        configuration.setCheckHeaders(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(1)).headers();
-        verify(request, times(0)).pathInfo();
-        verify(request, times(0)).parameters();
-        verify(policyChain, times(1)).doNext(request, response);
-    }
-
-    @Test
-    public void shouldRejectEvilHeaderName() {
-        HttpHeaders headers = createHttpHeaders();
-        headers.add("header-evil", "jkl");
-
-        when(request.headers()).thenReturn(headers);
-        configuration.setCheckHeaders(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-
-        verify(request, times(1)).headers();
-        verify(request, times(0)).pathInfo();
-        verify(request, times(0)).parameters();
-        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldRejectEvilHeaderValue() {
-        HttpHeaders headers = createHttpHeaders();
-        headers.add("header2", "jkl-evil");
-
-        when(request.headers()).thenReturn(headers);
-        configuration.setCheckHeaders(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(1)).headers();
-        verify(request, times(0)).pathInfo();
-        verify(request, times(0)).parameters();
-        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldCheckAndAcceptPathAndParams() {
-        when(request.pathInfo()).thenReturn("/path");
-        when(request.parameters()).thenReturn(createParams());
-        configuration.setCheckPath(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(0)).headers();
-        verify(request, times(1)).pathInfo();
-        verify(request, times(1)).parameters();
-        verify(policyChain, times(1)).doNext(request, response);
-    }
-
-    @Test
-    public void shouldRejectEvilPath() {
-        when(request.pathInfo()).thenReturn("/path-evil");
-        configuration.setCheckPath(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(0)).headers();
-        verify(request, times(1)).pathInfo();
-        verify(request, times(0)).parameters();
-        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldRejectEvilParamName() {
-        MultiValueMap<String, String> params = createParams();
-        params.add("param-evil", "jkl");
-
-        when(request.pathInfo()).thenReturn("/path");
-        when(request.parameters()).thenReturn(params);
-        configuration.setCheckPath(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(0)).headers();
-        verify(request, times(1)).pathInfo();
-        verify(request, times(1)).parameters();
-        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldRejectEvilParamValue() {
-        MultiValueMap<String, String> params = createParams();
-        params.add("param2", "jkl-evil");
-
-        when(request.pathInfo()).thenReturn("/path");
-        when(request.parameters()).thenReturn(params);
-        configuration.setCheckPath(true);
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(0)).headers();
-        verify(request, times(1)).pathInfo();
-        verify(request, times(1)).parameters();
-        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldIgnoreBody() {
-        configuration.setCheckBody(false);
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("provideTestCases")
+    public void testRegexProtection(
+        String testName,
+        boolean checkHeaders,
+        boolean checkPath,
+        boolean checkBody,
+        boolean fullMatching,
+        String input,
+        String regex,
+        boolean shouldPass
+    ) {
+        configuration.setCheckHeaders(checkHeaders);
+        configuration.setCheckPath(checkPath);
+        configuration.setCheckBody(checkBody);
+        configuration.setFullMatching(fullMatching);
+        configuration.setRegex(regex);
 
         ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertThat(readWriteStream).isNull();
-
-        verifyNoInteractions(policyChain);
+        if (checkHeaders) {
+            when(request.headers()).thenReturn(createHttpHeaders(input));
+        }
+        if (checkPath) {
+            when(request.pathInfo()).thenReturn(input);
+        }
+        if (checkBody) {
+            assertThat(readWriteStream).isNotNull();
+            final AtomicBoolean endCalled = spyEndHandler(readWriteStream);
+            readWriteStream.write(Buffer.buffer(input));
+            readWriteStream.end();
+            assertThat(endCalled.get()).isEqualTo(shouldPass);
+            if (!shouldPass) {
+                verify(policyChain, times(1)).streamFailWith(any(PolicyResult.class));
+            } else {
+                verifyNoInteractions(policyChain);
+            }
+        } else {
+            cut.onRequest(request, response, policyChain);
+            if (!shouldPass) {
+                verify(policyChain, times(1)).failWith(any(PolicyResult.class));
+            } else {
+                verify(policyChain, times(1)).doNext(request, response);
+            }
+        }
     }
 
-    @Test
-    public void shouldCheckAndAcceptBody() {
-        configuration.setCheckBody(true);
-
-        ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertThat(readWriteStream).isNotNull();
-
-        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = spyEndHandler(readWriteStream);
-
-        readWriteStream.write(Buffer.buffer("body content"));
-        readWriteStream.end();
-
-        assertThat(hasCalledEndOnReadWriteStreamParentClass).isTrue();
-
-        verifyNoInteractions(policyChain);
-    }
-
-    @Test
-    public void shouldRejectEvilBody() {
-        configuration.setCheckBody(true);
-
-        ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertThat(readWriteStream).isNotNull();
-
-        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = spyEndHandler(readWriteStream);
-
-        readWriteStream.write(Buffer.buffer("evil body content"));
-        readWriteStream.end();
-
-        assertThat(hasCalledEndOnReadWriteStreamParentClass).isFalse();
-
-        verify(policyChain, times(1)).streamFailWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldRejectEvilBodyCaseInsensitive() {
-        configuration.setCheckBody(true);
-
-        ReadWriteStream<Buffer> readWriteStream = cut.onRequestContent(request, policyChain);
-        assertThat(readWriteStream).isNotNull();
-
-        final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = spyEndHandler(readWriteStream);
-
-        readWriteStream.write(Buffer.buffer("EvIL body content"));
-        readWriteStream.end();
-
-        assertThat(hasCalledEndOnReadWriteStreamParentClass).isFalse();
-
-        verify(policyChain, times(1)).streamFailWith(any(PolicyResult.class));
-    }
-
-    @Test
-    public void shouldRejectPathTransversal() {
-        when(request.pathInfo()).thenReturn("/path/transversal/../path");
-        configuration.setCheckPath(true);
-        configuration.setRegex("^\\/?(.*\\.\\.).*$");
-
-        ReadWriteStream<?> readWriteStream = cut.onRequestContent(request, policyChain);
-        cut.onRequest(request, response, policyChain);
-
-        assertThat(readWriteStream).isNull();
-        verify(request, times(0)).headers();
-        verify(request, times(1)).pathInfo();
-        verify(request, times(0)).parameters();
-        verify(policyChain, times(1)).failWith(any(PolicyResult.class));
-    }
-
-    private HttpHeaders createHttpHeaders() {
+    private HttpHeaders createHttpHeaders(String input) {
         HttpHeaders headers = HttpHeaders.create();
-        headers.add("header1", "abc");
-        headers.add("header1", "def");
-        headers.add("header2", "ghi");
-        headers.add("header2", "jkl");
+        if (input != null) {
+            String[] parts = input.split(":");
+            if (parts.length == 2) {
+                headers.add(parts[0], parts[1]);
+            }
+        }
         return headers;
     }
 
-    private MultiValueMap<String, String> createParams() {
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("param1", "abc");
-        params.add("param1", "def");
-        params.add("param2", "ghi");
-        params.add("param2", "jkl");
-        params.add("boolean", null);
-        return params;
-    }
-
-    /**
-     * Replace the endHandler of the resulting ReadWriteStream of the policy execution.
-     * This endHandler will set an {@link AtomicBoolean} to {@code true} if its called.
-     * It will allow us to verify if super.end() has been called on {@link BufferedReadWriteStream#end()}
-     * @param readWriteStream: the {@link ReadWriteStream} to modify
-     * @return an AtomicBoolean set to {@code true} if {@link SimpleReadWriteStream#end()}, else {@code false}
-     */
-    private AtomicBoolean spyEndHandler(ReadWriteStream readWriteStream) {
+    private AtomicBoolean spyEndHandler(ReadWriteStream<?> readWriteStream) {
         final AtomicBoolean hasCalledEndOnReadWriteStreamParentClass = new AtomicBoolean(false);
-        readWriteStream.endHandler(__ -> {
-            hasCalledEndOnReadWriteStreamParentClass.set(true);
-        });
+        readWriteStream.endHandler(__ -> hasCalledEndOnReadWriteStreamParentClass.set(true));
         return hasCalledEndOnReadWriteStreamParentClass;
     }
 }
