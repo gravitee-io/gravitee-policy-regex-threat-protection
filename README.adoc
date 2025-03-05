@@ -48,6 +48,12 @@ The policy injects processing report messages into request metrics for analytics
 ^.^|boolean
 ^.^|false
 
+.^|fullMatching
+^.^|
+|Perform full content matching. When enabled, the regex must match the entire content. Otherwise, the request will be rejected if the regex is found anywhere within the content.
+^.^|boolean
+^.^|true
+
 .^|checkHeaders
 ^.^|
 |Evaluate regex on request headers

@@ -33,10 +33,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -95,7 +93,8 @@ public class RegexThreatProtectionPolicy {
                 @Override
                 public void end() {
                     // Load the body in memory and execute the regex on it.
-                    if (configuration.getPattern().matcher(buffer.toString()).matches()) {
+                    Matcher matcher = configuration.getPattern().matcher(buffer.toString());
+                    if ((configuration.isFullMatching() && matcher.matches()) || (!configuration.isFullMatching() && matcher.find())) {
                         policyChain.streamFailWith(
                             PolicyResult.failure(
                                 REGEX_THREAT_BODY_DETECTED_KEY,
