@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.5.0...1.6.0) (2025-03-11)
+
+
+### Features
+
+* add a config option to handle full-matching ([fe4087f](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/commit/fe4087f2bf02973a664204566a5529d788a61639))
+
 # [1.5.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.4.1...1.5.0) (2023-12-19)
 
 
