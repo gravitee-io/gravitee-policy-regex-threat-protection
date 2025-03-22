@@ -37,7 +37,7 @@
         <gravitee-bom.version>5.0.0</gravitee-bom.version>
         <gravitee-gateway-api.version>1.31.0</gravitee-gateway-api.version>
         <gravitee-policy-api.version>1.9.0</gravitee-policy-api.version>
-        <gravitee-common.version>1.17.2</gravitee-common.version>
+        <gravitee-common.version>4.6.1</gravitee-common.version>
         <junit.version>4.12</junit.version>
         <maven-assembly-plugin.version>2.5.5</maven-assembly-plugin.version>
         <gravitee-gateway-buffer.version>3.0.13</gravitee-gateway-buffer.version>
