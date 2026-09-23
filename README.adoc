@@ -24,11 +24,14 @@ You can use the `regex-threat-protection` to extract information from a request 
 If any content matches the specified regular expression, the request is considered a threat and rejected with a 400 BAD REQUEST.
 The policy injects processing report messages into request metrics for analytics.
 
-== Compatibility with APIM
+== Compatibility matrix
 
 |===
-| Plugin version | APIM version
-| 1.x            | All supported versions
+| Plugin version | APIM             | Java version
+
+| 2.x            | 4.7.x to latest  | 21
+| 1.4.x to 1.6.x | 3.18.x to latest | 11
+| 1.0.x to 1.3.x | 3.x              | 8
 |===
 
 == Configuration
