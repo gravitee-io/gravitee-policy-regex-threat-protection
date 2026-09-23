@@ -131,7 +131,10 @@ public class RegexThreatProtectionPolicy {
 
             match =
                 pattern.matcher(header).matches() ||
-                headers.getAll(header).stream().anyMatch(e -> pattern.matcher(decodeValues ? decode(e) : e).matches());
+                headers
+                    .getAll(header)
+                    .stream()
+                    .anyMatch(e -> pattern.matcher(decodeValues ? decode(e) : e).matches());
             if (match) {
                 break;
             }
@@ -150,9 +153,14 @@ public class RegexThreatProtectionPolicy {
         return map
             .entrySet()
             .stream()
-            .anyMatch(e ->
-                pattern.matcher(e.getKey()).matches() ||
-                e.getValue().stream().filter(Objects::nonNull).anyMatch(v -> pattern.matcher(decodeValues ? decode(v) : v).matches())
+            .anyMatch(
+                e ->
+                    pattern.matcher(e.getKey()).matches() ||
+                    e
+                        .getValue()
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .anyMatch(v -> pattern.matcher(decodeValues ? decode(v) : v).matches())
             );
     }
 
