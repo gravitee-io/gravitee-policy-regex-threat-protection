@@ -1,3 +1,16 @@
+# [2.0.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.6.0...2.0.0) (2026-10-02)
+
+
+* chore(deps)!: move to the gravitee orb 5 and parent 23 ([dfed32b](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/commit/dfed32bc6f9b2c20b89d76a153f9f794ac4299ef))
+
+
+### BREAKING CHANGES
+
+* the artifact is now compiled for Java 21, up from Java 11, and
+requires a Java 21 runtime or later.
+
+https://gravitee.atlassian.net/browse/BX-403
+
 # [1.6.0](https://github.com/gravitee-io/gravitee-policy-regex-threat-protection/compare/1.5.0...1.6.0) (2025-03-11)
 
 
